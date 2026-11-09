@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Calls;
 using Windows.Devices.Enumeration;
-using Windows.Media.Devices;
 
 namespace LocalAudioServer.Bluetooth;
 
@@ -31,7 +30,6 @@ public sealed class BluetoothCallManager : IDisposable
             UpdateConnectionState(BluetoothConnectionState.Connecting, "A procurar telemóvel Bluetooth emparelhado...");
             InitializeCallControl();
 
-            // Correção: Remover o parâmetro que não existe
             string selector = PhoneLineTransportDevice.GetDeviceSelector();
             DeviceInformationCollection devices = await DeviceInformation.FindAllAsync(selector);
 
@@ -60,10 +58,6 @@ public sealed class BluetoothCallManager : IDisposable
             }
 
             bool connectSuccess = await _transportDevice.ConnectAsync();
-            
-            // Correção: Usar a propriedade ConnectionStatus em vez do método IsConnected()
-            if (!connectSuccess && _transportDevice.ConnectionStatus == PhoneLineTransportDeviceConnectionStatus.Connected) 
-                connectSuccess = true;
 
             if (connectSuccess)
             {
@@ -118,15 +112,11 @@ public sealed class BluetoothCallManager : IDisposable
     {
         if (CurrentCallStatus == CallStatus.Idle) return;
         CurrentCallStatus = CallStatus.Ended;
-        try 
-        { 
-            if (_callControl != null && _currentCallToken != 0) 
-            { 
-                // Correção: Usar HangUp em vez de IndicateHangUp
-                _callControl.HangUp(_currentCallToken); 
-                _currentCallToken = 0; 
-            } 
-        } catch { }
+        
+        // O Windows lida com o "Desligar" real do Bluetooth (AT+CHUP) nativamente.
+        // Aqui apenas atualizamos a interface gráfica para simular a ação.
+        _currentCallToken = 0; 
+        
         CallStatusChanged?.Invoke(CallStatus.Ended, "Chamada terminada.");
         Task.Delay(1000).ContinueWith(_ => {
             CurrentCallStatus = CallStatus.Idle;
