@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissão para abrir sockets TCP (necessário mesmo para 127.0.0.1 via adb reverse) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Permissão necessária para AudioRecord -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Permissões de Foreground Service para Android 9+ e Android 14+ -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@android:drawable/ic_lock_silent_mode_off"
+        android:label="@string/app_name"
+        android:roundIcon="@android:drawable/ic_lock_silent_mode_off"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.LocalAudioMirror">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Serviço em primeiro plano com tipo mediaProjection (obrigatório API 29+) -->
+        <service
+            android:name=".AudioCaptureService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+    </application>
+
+</manifest>

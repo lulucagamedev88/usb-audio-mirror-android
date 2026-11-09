@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">USB Audio Mirror</string>
+    <string name="start_capture">Iniciar Captura de Áudio</string>
+    <string name="stop_capture">Parar Captura</string>
+    <string name="service_running_title">USB Audio Mirror Ativo</string>
+    <string name="service_running_desc">Capturando áudio do sistema e enviando via USB para o PC (127.0.0.1:5000)</string>
+    <string name="status_idle">Estado: Parado</string>
+    <string name="status_connecting">Estado: A ligar ao PC (127.0.0.1:5000)...</string>
+    <string name="status_streaming">Estado: Áudio a transmitir para o PC (48kHz, 16-bit, 20ms)</string>
+    <string name="status_disconnected">Estado: Servidor PC não detetado. Reconexão em segundo plano...</string>
+    <string name="channel_name">Serviço de Áudio USB</string>
+    <string name="channel_description">Notificação persistente para captura de áudio via MediaProjection</string>
+</resources>
