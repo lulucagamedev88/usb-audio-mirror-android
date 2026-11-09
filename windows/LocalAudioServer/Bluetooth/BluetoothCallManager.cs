@@ -31,17 +31,13 @@ public sealed class BluetoothCallManager : IDisposable
             UpdateConnectionState(BluetoothConnectionState.Connecting, "A procurar telemóvel Bluetooth emparelhado...");
             InitializeCallControl();
 
-            string selector = PhoneLineTransportDevice.GetDeviceSelector(PhoneLineTransportType.Bluetooth);
+            // Correção: Remover o parâmetro que não existe
+            string selector = PhoneLineTransportDevice.GetDeviceSelector();
             DeviceInformationCollection devices = await DeviceInformation.FindAllAsync(selector);
-            if (devices.Count == 0)
-            {
-                string fallbackSelector = PhoneLineTransportDevice.GetDeviceSelector();
-                devices = await DeviceInformation.FindAllAsync(fallbackSelector);
-            }
 
             if (devices.Count == 0)
             {
-                UpdateConnectionState(BluetoothConnectionState.Failed, "Nenhum telemóvel Bluetooth emparelhado com suporte a chamadas HFP foi encontrado.");
+                UpdateConnectionState(BluetoothConnectionState.Failed, "Nenhum telemóvel Bluetooth emparelhado encontrado.");
                 return false;
             }
 
@@ -52,7 +48,7 @@ public sealed class BluetoothCallManager : IDisposable
             _transportDevice = PhoneLineTransportDevice.FromId(targetDevice.Id);
             if (_transportDevice == null)
             {
-                UpdateConnectionState(BluetoothConnectionState.Failed, $"Não foi possível instanciar PhoneLineTransportDevice.");
+                UpdateConnectionState(BluetoothConnectionState.Failed, $"Não foi possível instanciar o dispositivo Bluetooth.");
                 return false;
             }
 
@@ -64,7 +60,10 @@ public sealed class BluetoothCallManager : IDisposable
             }
 
             bool connectSuccess = await _transportDevice.ConnectAsync();
-            if (!connectSuccess && _transportDevice.IsConnected()) connectSuccess = true;
+            
+            // Correção: Usar a propriedade ConnectionStatus em vez do método IsConnected()
+            if (!connectSuccess && _transportDevice.ConnectionStatus == PhoneLineTransportDeviceConnectionStatus.Connected) 
+                connectSuccess = true;
 
             if (connectSuccess)
             {
@@ -119,7 +118,15 @@ public sealed class BluetoothCallManager : IDisposable
     {
         if (CurrentCallStatus == CallStatus.Idle) return;
         CurrentCallStatus = CallStatus.Ended;
-        try { if (_callControl != null && _currentCallToken != 0) { _callControl.IndicateHangUp(_currentCallToken); _currentCallToken = 0; } } catch { }
+        try 
+        { 
+            if (_callControl != null && _currentCallToken != 0) 
+            { 
+                // Correção: Usar HangUp em vez de IndicateHangUp
+                _callControl.HangUp(_currentCallToken); 
+                _currentCallToken = 0; 
+            } 
+        } catch { }
         CallStatusChanged?.Invoke(CallStatus.Ended, "Chamada terminada.");
         Task.Delay(1000).ContinueWith(_ => {
             CurrentCallStatus = CallStatus.Idle;
