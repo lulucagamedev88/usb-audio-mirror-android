@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Calls;
 using Windows.Devices.Enumeration;
 
 namespace LocalAudioServer.Bluetooth;
@@ -12,8 +11,6 @@ public enum CallStatus { Idle, Incoming, Active, Ended }
 public sealed class BluetoothCallManager : IDisposable
 {
     private PhoneLineTransportDevice? _transportDevice;
-    private CallControl? _callControl;
-    private ulong _currentCallToken;
 
     public BluetoothConnectionState ConnectionState { get; private set; } = BluetoothConnectionState.Disconnected;
     public CallStatus CurrentCallStatus { get; private set; } = CallStatus.Idle;
@@ -28,8 +25,7 @@ public sealed class BluetoothCallManager : IDisposable
         try
         {
             UpdateConnectionState(BluetoothConnectionState.Connecting, "A procurar telemóvel Bluetooth emparelhado...");
-            InitializeCallControl();
-
+            
             string selector = PhoneLineTransportDevice.GetDeviceSelector();
             DeviceInformationCollection devices = await DeviceInformation.FindAllAsync(selector);
 
@@ -74,29 +70,10 @@ public sealed class BluetoothCallManager : IDisposable
         }
     }
 
-    private void InitializeCallControl()
-    {
-        try
-        {
-            if (_callControl != null) return;
-            _callControl = CallControl.GetDefault();
-            if (_callControl != null)
-            {
-                _callControl.AnswerRequested += CallControl_AnswerRequested;
-                _callControl.HangUpRequested += CallControl_HangUpRequested;
-            }
-        }
-        catch (Exception ex) { Debug.WriteLine($"Erro CallControl: {ex.Message}"); }
-    }
-
-    private void CallControl_AnswerRequested(CallControl sender) => AnswerCall();
-    private void CallControl_HangUpRequested(CallControl sender) => HangUpCall();
-
     public void NotifyIncomingCall(string callerId)
     {
         CallerInfo = callerId;
         CurrentCallStatus = CallStatus.Incoming;
-        try { if (_callControl != null) _currentCallToken = _callControl.IndicateNewIncomingCall(true, callerId); } catch { }
         CallStatusChanged?.Invoke(CallStatus.Incoming, $"Chamada recebida de: {callerId}");
     }
 
@@ -104,7 +81,6 @@ public sealed class BluetoothCallManager : IDisposable
     {
         if (CurrentCallStatus != CallStatus.Incoming) return;
         CurrentCallStatus = CallStatus.Active;
-        try { if (_callControl != null && _currentCallToken != 0) _callControl.IndicateActiveCall(_currentCallToken); } catch { }
         CallStatusChanged?.Invoke(CallStatus.Active, $"Chamada em curso com {CallerInfo}");
     }
 
@@ -112,10 +88,6 @@ public sealed class BluetoothCallManager : IDisposable
     {
         if (CurrentCallStatus == CallStatus.Idle) return;
         CurrentCallStatus = CallStatus.Ended;
-        
-        // O Windows lida com o "Desligar" real do Bluetooth (AT+CHUP) nativamente.
-        // Aqui apenas atualizamos a interface gráfica para simular a ação.
-        _currentCallToken = 0; 
         
         CallStatusChanged?.Invoke(CallStatus.Ended, "Chamada terminada.");
         Task.Delay(1000).ContinueWith(_ => {
@@ -141,11 +113,5 @@ public sealed class BluetoothCallManager : IDisposable
     public void Dispose()
     {
         Disconnect();
-        if (_callControl != null)
-        {
-            _callControl.AnswerRequested -= CallControl_AnswerRequested;
-            _callControl.HangUpRequested -= CallControl_HangUpRequested;
-            _callControl = null;
-        }
     }
 }
