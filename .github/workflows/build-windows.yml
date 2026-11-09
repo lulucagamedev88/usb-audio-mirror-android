@@ -1,0 +1,28 @@
+name: Build Windows Server
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Build and Publish
+      run: dotnet publish windows/LocalAudioServer/LocalAudioServer.csproj -c Release -r win-x64 --self-contained false -o ./publish
+
+    - name: Upload Windows Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: LocalAudioServer-Windows
+        path: ./publish/
