@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Calls; // <-- A LINHA QUE FALTAVA AQUI
 using Windows.Devices.Enumeration;
 
 namespace LocalAudioServer.Bluetooth;
